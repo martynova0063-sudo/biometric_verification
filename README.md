@@ -16,6 +16,10 @@
 ![ONNX%20Runtime](https://img.shields.io/badge/ONNX%20Runtime-1.16.x-cyan.svg)
 ![TensorRT](https://img.shields.io/badge/TensorRT-8.x-indigo.svg)
 
+### Liveness-проверка (антиспуфинг)
+![rPPG](https://img.shields.io/badge/rPPG-physiological-red.svg)
+![ICA%2F%20PCA](https://img.shields.io/badge/ICA%2FPCA-signal-separation-orange.svg)
+
 ### LLM и интерпретация результатов
 ![LangChain](https://img.shields.io/badge/LangChain-0.2.x-blue.svg)
 ![Llama%203](https://img.shields.io/badge/Llama%203-8B-green.svg)
