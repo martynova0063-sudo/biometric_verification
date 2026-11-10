@@ -1,4 +1,28 @@
 # ИС УКЗ - Система биометрической верификации личности и исследовательский модуль HEALTH_ID для дистанционных периодических медицинских осмотров (ПрМО)
+
+### Компьютерное зрение (CV) и предобработка
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-blue.svg)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10.x-orange.svg)
+![Albumentations](https://img.shields.io/badge/Albumentations-1.3.x-green.svg)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-6.x-darkblue.svg)
+![MTCNN](https://img.shields.io/badge/MTCNN-0.1.x-purple.svg)
+![Dlib](https://img.shields.io/badge/Dlib-19.x-pink.svg)
+
+### Извлечение эмбеддингов и биометрические модели
+![InsightFace](https://img.shields.io/badge/InsightFace-0.7.x-teal.svg)
+![ONNX%20Runtime](https://img.shields.io/badge/ONNX%20Runtime-1.16.x-cyan.svg)
+![TensorRT](https://img.shields.io/badge/TensorRT-8.x-indigo.svg)
+
+### LLM и интерпретация результатов
+![LangChain](https://img.shields.io/badge/LangChain-0.2.x-blue.svg)
+![Llama%203](https://img.shields.io/badge/Llama%203-8B-green.svg)
+![Guardrails](https://img.shields.io/badge/Guardrails-0.5.x-purple.svg)
+
+### Хранение векторов и поиск по сходству
+![FAISS](https://img.shields.io/badge/FAISS-1.8.x-darkgreen.svg)
+![pgvector](https://img.shields.io/badge/pgvector-1.5.x-purple.svg)
+![Qdrant](https://img.shields.io/badge/Qdrant-1.9.x-blue.svg)
+
 ![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-2.0.0-green.svg)
 
@@ -11,6 +35,8 @@
 
 ### Хранение и миграции
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-blue.svg) ![Alembic](https://img.shields.io/badge/Alembic-1.0+-purple.svg)
+
+
 ## 📑 Содержание
 
 - [1. Общие сведения и цели 🎯](#1-общие-сведения-и-цели)
