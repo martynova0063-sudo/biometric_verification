@@ -1,0 +1,5 @@
+- [Workspace runtime conventions](workspace-runtime-conventions.md) — filtered pnpm scripts run from the package directory.
+- [OpenCV wheel compatibility](opencv-wheel-compatibility.md) — keep DeepFace and OpenCV wheel versions aligned or cv2 may lose its native module.
+- [Verification multi-face policy](verification-multiface-policy.md) — extra face candidates must not block a session when the reference-matching face can be selected.
+- [Not-evaluable verification outcome](not-evaluable-status.md) — a failed assessment is distinct from an identity mismatch and must route to retry or manual review.
+- [Embedding comparison retention](embedding-comparison-retention.md) — compare video vectors in memory and retain only aggregate distribution statistics with the verification session.

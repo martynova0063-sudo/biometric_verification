@@ -1,0 +1,363 @@
+.arcface-recognition-panel {
+  margin-bottom: 16px;
+}
+
+.arcface-refresh-button {
+  white-space: nowrap;
+}
+
+.arcface-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.arcface-header-actions .button {
+  white-space: nowrap;
+}
+
+.arcface-panel-body {
+  display: grid;
+  gap: 14px;
+  padding: 0 16px 16px;
+}
+
+.arcface-enroll-picker {
+  display: grid;
+  max-width: 520px;
+  gap: 6px;
+  color: hsl(var(--foreground));
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.arcface-enroll-picker select {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 5px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font: inherit;
+}
+
+.arcface-enroll-picker small {
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.arcface-saved-photo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 68px;
+  padding: 8px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  background: hsl(var(--muted) / .18);
+}
+
+.arcface-saved-photo img,
+.arcface-saved-photo-placeholder {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  border: 1px solid hsl(var(--border));
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.arcface-saved-photo-placeholder {
+  display: grid;
+  place-items: center;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / .5);
+  font-size: 9px;
+}
+
+.arcface-saved-photo-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.arcface-saved-photo-copy strong {
+  color: hsl(var(--foreground));
+  font-size: 10px;
+}
+
+.arcface-saved-photo-copy small {
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.arcface-index-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+}
+
+.arcface-status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: hsl(38 77% 48%);
+}
+
+.arcface-status-ready {
+  background: hsl(151 55% 42%);
+}
+
+.arcface-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.arcface-file-picker {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: hsl(var(--foreground));
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.arcface-file-picker input {
+  width: 100%;
+  min-width: 0;
+  color: hsl(var(--foreground));
+  font-size: 10px;
+}
+
+.arcface-file-picker small,
+.arcface-muted {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.arcface-photo-preview {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border: 1px solid hsl(var(--border));
+  border-radius: 5px;
+}
+
+.arcface-search-form > .button {
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.arcface-spinning {
+  animation: arcface-spin 1s linear infinite;
+}
+
+@keyframes arcface-spin {
+  to { transform: rotate(360deg); }
+}
+
+.arcface-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 10px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.arcface-message svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.arcface-message-error {
+  color: hsl(var(--destructive));
+  background: hsl(var(--destructive) / .06);
+  border-color: hsl(var(--destructive) / .22);
+}
+
+.arcface-message-success {
+  color: hsl(151 43% 33%);
+  background: hsl(151 43% 35% / .07);
+  border-color: hsl(151 43% 35% / .2);
+}
+
+.arcface-search-result {
+  display: grid;
+  gap: 10px;
+  padding-top: 13px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.arcface-match-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid;
+  border-radius: 5px;
+}
+
+.arcface-match-status > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.arcface-match-status > span {
+  display: grid;
+  gap: 3px;
+}
+
+.arcface-match-status strong {
+  font-size: 11px;
+}
+
+.arcface-match-status small {
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+}
+
+.arcface-match-found {
+  color: hsl(151 43% 33%);
+  background: hsl(151 43% 35% / .07);
+  border-color: hsl(151 43% 35% / .22);
+}
+
+.arcface-match-unknown {
+  color: hsl(38 73% 35%);
+  background: hsl(38 77% 48% / .08);
+  border-color: hsl(38 77% 48% / .26);
+}
+
+.arcface-candidate-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arcface-candidate-list li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid hsl(var(--border) / .7);
+}
+
+.arcface-candidate-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.arcface-candidate-identity > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.arcface-candidate-identity strong {
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.arcface-candidate-rank {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / .08);
+  border-radius: 50%;
+  font: 600 10px var(--app-font-mono);
+}
+
+.arcface-uuid {
+  color: hsl(var(--muted-foreground));
+  font: 9px var(--app-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.arcface-candidate-score {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.arcface-candidate-score > strong {
+  min-width: 48px;
+  font: 600 11px var(--app-font-mono);
+  text-align: right;
+}
+
+.arcface-candidate-score .button {
+  min-height: 30px;
+  padding: 6px 9px;
+  font-size: 9px;
+}
+
+.arcface-disclaimer {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .arcface-panel-body {
+    padding-inline: 12px;
+  }
+
+  .arcface-search-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .arcface-file-picker {
+    grid-column: 1 / -1;
+  }
+
+  .arcface-photo-preview {
+    width: 60px;
+    height: 60px;
+  }
+
+  .arcface-candidate-list li {
+    align-items: flex-start;
+  }
+
+  .arcface-candidate-score {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .arcface-candidate-score > strong {
+    text-align: right;
+  }
+}

@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic-settings
+psycopg[binary]
+python-multipart
+deepface[tensorflow]==0.0.101
+opencv-python==4.12.0.88
+tf-keras>=2.20,<2.22
+torch
+torchvision
+faiss-cpu
+python-jose[cryptography] 
+openai
+passlib[bcrypt]

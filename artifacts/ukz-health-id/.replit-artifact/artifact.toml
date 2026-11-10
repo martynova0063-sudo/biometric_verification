@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "ИС УКЗ · HEALTH_ID"
+description = "Исследовательская платформа дистанционных периодических медосмотров: биометрическая верификация, HEALTH_ID и human review."
+version = "1.0.0"
+id = "artifacts/ukz-health-id"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20404
+
+[services.development]
+run = "pnpm --filter @workspace/ukz-health-id run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ukz-health-id", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ukz-health-id/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20404"
+BASE_PATH = "/"

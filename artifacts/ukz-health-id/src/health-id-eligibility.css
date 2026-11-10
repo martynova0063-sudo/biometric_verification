@@ -1,0 +1,169 @@
+.calc-eligibility-message {
+  display: block;
+  margin-top: 6px;
+  color: hsl(204 20% 73%);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.calc-eligibility-error {
+  color: hsl(5 68% 72%);
+}
+
+.personal-baseline {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.personal-baseline-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.personal-baseline-heading h3 {
+  margin: 5px 0 4px;
+  color: hsl(var(--foreground));
+  font-size: 14px;
+}
+
+.personal-baseline-heading p,
+.personal-baseline-note {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.personal-baseline-list {
+  display: grid;
+  margin-top: 13px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.personal-baseline-row {
+  display: grid;
+  grid-template-columns: minmax(105px, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
+}
+
+.personal-baseline-label,
+.personal-baseline-values {
+  display: grid;
+  gap: 3px;
+}
+
+.personal-baseline-label b,
+.personal-baseline-values strong {
+  color: hsl(var(--foreground));
+  font-size: 11px;
+}
+
+.personal-baseline-label small,
+.personal-baseline-values span {
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+}
+
+.personal-baseline-values strong small {
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.personal-baseline-insufficient {
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+}
+
+.personal-baseline-note {
+  margin-top: 10px;
+}
+
+.personal-baseline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  color: hsl(var(--destructive));
+  font-size: 11px;
+}
+
+.baseline-register-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 4px 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.5);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.baseline-outside_corridor {
+  border-color: hsl(5 64% 68% / 0.45);
+  color: hsl(5 68% 72%);
+  background: hsl(5 55% 30% / 0.2);
+}
+
+.baseline-within_corridor {
+  border-color: hsl(160 42% 52% / 0.4);
+  color: hsl(160 48% 66%);
+  background: hsl(160 40% 25% / 0.18);
+}
+
+.score-outside-baseline {
+  color: hsl(5 68% 72%) !important;
+  text-decoration: underline;
+  text-decoration-color: hsl(5 68% 72% / 0.6);
+  text-underline-offset: 3px;
+}
+
+.baseline-result-notice {
+  display: grid;
+  gap: 4px;
+  margin: 13px 0 2px;
+  padding: 10px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 7px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.35);
+}
+
+.baseline-result-notice strong {
+  font-size: 11px;
+}
+
+.baseline-result-notice small {
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.baseline-notice-outside_corridor {
+  border-color: hsl(5 64% 68% / 0.45);
+  background: hsl(5 55% 30% / 0.13);
+}
+
+.baseline-notice-outside_corridor strong {
+  color: hsl(5 68% 72%);
+}
+
+@media (max-width: 640px) {
+  .personal-baseline-heading {
+    flex-direction: column;
+  }
+
+  .personal-baseline-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
