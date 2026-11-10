@@ -1,0 +1,2 @@
+zipFile.zip filter=lfs diff=lfs merge=lfs -text
+artifacts/api-server/app/storage/best_arcface_resnet50.pth filter=lfs diff=lfs merge=lfs -text
