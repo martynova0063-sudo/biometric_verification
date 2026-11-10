@@ -1,0 +1,1690 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 1.0.0
+  description: API ИС УКЗ — биометрическая верификация и исследовательский модуль HEALTH_ID
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: dashboard
+  - name: health-id
+  - name: verification
+  - name: review
+  - name: governance
+  - name: auth
+  - name: employees
+paths:
+  /auth/user:
+    get:
+      operationId: getCurrentAuthUser
+      tags: [auth]
+      summary: Текущий пользователь
+      responses:
+        "200":
+          description: Состояние сессии входа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserEnvelope"
+  /auth/login:
+    post:
+      operationId: passwordLogin
+      tags: [auth]
+      summary: Получить JWT для доступа к API по паролю
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordLoginInput"
+      responses:
+        "200":
+          description: Короткоживущий токен доступа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasswordLoginToken"
+        "401": { description: Неверный пароль }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "503": { description: Вход по паролю не настроен }
+  /login:
+    get:
+      operationId: beginBrowserLogin
+      tags: [auth]
+      summary: Начать вход
+      parameters:
+        - name: returnTo
+          in: query
+          schema: { type: string }
+      responses:
+        "302": { description: Перенаправление к провайдеру входа }
+  /callback:
+    get:
+      operationId: completeBrowserLogin
+      tags: [auth]
+      summary: Завершить вход
+      responses:
+        "302": { description: Возврат в приложение }
+  /logout:
+    get:
+      operationId: logoutBrowserSession
+      tags: [auth]
+      summary: Завершить сессию входа
+      parameters:
+        - name: returnTo
+          in: query
+          schema: { type: string }
+      responses:
+        "302": { description: Перенаправление после выхода }
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: Список сотрудников с эталонными фото
+      responses:
+        "200":
+          description: Сотрудники и состояние эталонных фотографий
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Employee" }
+  /employees/{employee_guid}/photo:
+    get:
+      operationId: getEmployeePhoto
+      tags: [employees]
+      summary: Получить эталонное фото сотрудника
+      parameters:
+        - name: employee_guid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Приватное изображение JPEG
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: saveEmployeePhoto
+      tags: [employees]
+      summary: Сохранить или заменить эталонное фото сотрудника
+      parameters:
+        - name: employee_guid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmployeePhotoFinalizeInput" }
+      responses:
+        "200":
+          description: Новое фото сохранено; прежняя версия при замене архивируется в закрытом dataset
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { description: Не удалось сохранить прежнее фото в dataset или записать новое фото }
+  /employees/{employee_guid}/photo/upload-url:
+    post:
+      operationId: requestEmployeePhotoUploadUrl
+      tags: [employees]
+      summary: Получить одноразовую ссылку для загрузки или замены снимка сотрудника
+      parameters:
+        - name: employee_guid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmployeePhotoUploadUrlInput" }
+      responses:
+        "200":
+          description: Одноразовая ссылка на приватное хранилище
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmployeePhotoUploadUrlResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { description: У сотрудника уже есть фото }
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Проверка доступности API
+      responses:
+        "200":
+          description: Сервис доступен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Сводка по системе
+      responses:
+        "200":
+          description: Сводные показатели
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [dashboard]
+      summary: Последние действия системы
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Лента действий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+  /health-results:
+    get:
+      operationId: listHealthResults
+      tags: [health-id]
+      summary: Список расчётов HEALTH_ID
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [all, stable, attention, review]
+            default: all
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        "200":
+          description: Результаты расчётов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HealthResultListItem"
+    post:
+      operationId: calculateHealthId
+      tags: [health-id]
+      summary: Рассчитать HEALTH_ID для сотрудника с успешной верификацией
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HealthCalculationInput"
+      responses:
+        "201":
+          description: Расчёт выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Последняя верификация сотрудника не успешна и не подтверждена вручную
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /health-results/eligible-employees:
+    get:
+      operationId: listEligibleHealthEmployees
+      tags: [health-id]
+      summary: Список сотрудников, допущенных к расчёту HEALTH_ID
+      responses:
+        "200":
+          description: Сотрудники с последней успешной или вручную подтверждённой верификацией
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EligibleHealthEmployee"
+  /health-results/employees/{employee_ref}/personal-baseline:
+    get:
+      operationId: getPersonalHealthBaseline
+      tags: [health-id]
+      summary: Рассчитать персональные коридоры показателей за последние 30 дней
+      parameters:
+        - name: employee_ref
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Персональные коридоры HEALTH_ID и показателей здоровья
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalBaseline"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /health-results/{result_id}:
+    get:
+      operationId: getHealthResult
+      tags: [health-id]
+      summary: Получить расчёт HEALTH_ID
+      parameters:
+        - $ref: "#/components/parameters/ResultId"
+      responses:
+        "200":
+          description: Результат расчёта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /verification/sessions:
+    get:
+      operationId: listVerificationSessions
+      tags: [verification]
+      summary: Список сессий верификации
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Сессии верификации
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VerificationSession"
+    post:
+      operationId: createVerificationSession
+      tags: [verification]
+      summary: Запустить сессию биометрической верификации
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/VerificationUploadInput"
+      responses:
+        "201":
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionDetail"
+  /verification/sessions/{session_id}/embedding-interpretation:
+    post:
+      operationId: createEmbeddingInterpretation
+      tags: [verification]
+      summary: Сформировать техническую интерпретацию агрегатов эмбеддингов
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmbeddingInterpretationRequest"
+      responses:
+        "200":
+          description: Техническая интерпретация агрегированных метрик
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmbeddingInterpretation"
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { description: Для сессии недостаточно агрегированных данных }
+        "502": { description: Не удалось получить ответ от LLM }
+        "503": { description: Сервис LLM не настроен }
+  /verification/sessions/{session_id}/review-request:
+    post:
+      operationId: requestVerificationReview
+      tags: [verification]
+      summary: Отправить автоматически подтверждённое совпадение на ручную проверку
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Создана или уже существует открытая задача проверки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewTask"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Сессия не является автоматически подтверждённым совпадением
+  /verification/review-queue:
+    get:
+      operationId: listPendingVerificationReviews
+      tags: [verification]
+      summary: Список сессий, ожидающих ручной проверки
+      responses:
+        "200":
+          description: Сессии с задачами в статусе open или in_review
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VerificationReviewQueueItem"
+  /verification/sessions/{session_id}/review-decision:
+    post:
+      operationId: resolveVerificationSessionReview
+      tags: [verification]
+      summary: Подтвердить, отклонить или запросить повторную проверку сессии
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationReviewDecisionInput"
+      responses:
+        "200":
+          description: Задача проверки обновлена; системные значения не изменены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewTask"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Сессия не находится в активной очереди проверки
+        "422":
+          description: Для подтверждения или отклонения требуются обе оценки Ground Truth
+  /verification/sessions/{session_id}/status:
+    get:
+      operationId: getVerificationSessionStatus
+      tags: [verification]
+      summary: Получить статус сессии и результат ручной проверки
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Системный статус и Ground Truth сессии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /verification/videos/convert:
+    post:
+      operationId: convertVerificationCameraVideo
+      tags: [verification]
+      summary: Нормализовать запись с камеры в MP4 640×480
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CameraVideoConversionInput"
+      responses:
+        "200":
+          description: Видео MP4 с размером кадра 640×480
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        "413":
+          description: Видео превышает допустимый размер
+        "415":
+          description: Неподдерживаемый формат видео
+        "422":
+          description: Ошибка преобразования видео
+        "503":
+          description: Сервис конвертации недоступен
+  /verification/sessions/{session_id}:
+    get:
+      operationId: getVerificationSession
+      tags: [verification]
+      summary: Результат сессии верификации
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Сессия верификации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteVerificationSession
+      tags: [verification]
+      summary: Удалить сессию верификации
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "204":
+          description: Сессия удалена
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /verification/sessions/{session_id}/complete:
+    post:
+      operationId: completeVerificationSessionVideo
+      tags: [verification]
+      summary: Завершить приём видео для сессии биометрической верификации
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Приём видео завершён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoReceiptComplete"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /verification/metrics:
+    get:
+      operationId: listVerificationMetrics
+      tags: [verification]
+      summary: История сохранённых биометрических метрик
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Снимки FAR, FRR, APCER и BPCER
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BiometricMetrics"
+  /verification/metrics/calculate:
+    post:
+      operationId: calculateVerificationMetrics
+      tags: [verification]
+      summary: Рассчитать и сохранить биометрические метрики
+      parameters:
+        - name: window_days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 7
+      responses:
+        "201":
+          description: Рассчитанный снимок метрик сохранён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricMetrics"
+  /drift/summary:
+    get:
+      operationId: getDataDriftSummary
+      tags: [drift]
+      summary: Текущее состояние мониторинга дрейфа данных
+      responses:
+        "200":
+          description: Сводка дрейфа, базовой выборки и режима обработки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataDriftSummary"
+  /drift/history:
+    get:
+      operationId: listDataDriftRuns
+      tags: [drift]
+      summary: История ежедневных проверок дрейфа
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 30
+      responses:
+        "200":
+          description: Последние ежедневные результаты PSI
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataDriftRun"
+  /drift/run:
+    post:
+      operationId: runDataDriftAnalysis
+      tags: [drift]
+      summary: Запустить анализ дрейфа немедленно
+      responses:
+        "200":
+          description: Обновлённая сводка мониторинга
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataDriftSummary"
+  /drift/control:
+    post:
+      operationId: updateDataDriftControl
+      tags: [drift]
+      summary: Изменить режим ручной проверки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataDriftControlInput"
+      responses:
+        "200":
+          description: Обновлённая сводка мониторинга
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataDriftSummary"
+        "409":
+          description: Нельзя отключить ручной режим при критическом дрейфе
+  /review/tasks:
+    get:
+      operationId: listReviewTasks
+      tags: [review]
+      summary: Очередь ручной проверки
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, open, in_review, resolved]
+            default: all
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Задачи ручной проверки
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReviewTask"
+  /review/tasks/{task_id}/decision:
+    post:
+      operationId: resolveReviewTask
+      tags: [review]
+      summary: Принять решение по задаче ручной проверки
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Задача закрыта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewTask"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /governance/model-card:
+    get:
+      operationId: getModelCard
+      tags: [governance]
+      summary: Карточка модели HEALTH_ID
+      responses:
+        "200":
+          description: Карточка исследовательской модели
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelCard"
+  /governance/versions:
+    get:
+      operationId: listModelVersions
+      tags: [governance]
+      summary: Журнал версий модели
+      responses:
+        "200":
+          description: Версии модели
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelVersion"
+  /governance/models/defaults:
+    get:
+      operationId: getModelDefaults
+      tags: [governance]
+      summary: Системные параметры модели по умолчанию
+      responses:
+        "200":
+          description: Значения из verification_config.py
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelDefaults"
+  /governance/models:
+    get:
+      operationId: listRegisteredModels
+      tags: [governance]
+      summary: Список зарегистрированных моделей
+      responses:
+        "200":
+          description: Модели и их параметры
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelRegistry"
+    post:
+      operationId: createRegisteredModel
+      tags: [governance]
+      summary: Добавить модель
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelRegistryInput"
+      responses:
+        "201":
+          description: Модель создана как черновик
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelRegistry"
+  /governance/models/{model_id}:
+    put:
+      operationId: updateRegisteredModel
+      tags: [governance]
+      summary: Изменить модель
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelRegistryInput"
+      responses:
+        "200":
+          description: Модель обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelRegistry"
+        "404": { $ref: "#/components/responses/NotFound" }
+  /governance/models/{model_id}/activate:
+    post:
+      operationId: activateRegisteredModel
+      tags: [governance]
+      summary: Активировать модель
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Активная модель обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelRegistry"
+        "404": { $ref: "#/components/responses/NotFound" }
+  /governance/models/{model_id}/archive:
+    post:
+      operationId: archiveRegisteredModel
+      tags: [governance]
+      summary: Архивировать модель
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Модель архивирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelRegistry"
+        "404": { $ref: "#/components/responses/NotFound" }
+  /arcface/status:
+    get:
+      operationId: getArcfaceStatus
+      tags: [verification]
+      summary: Состояние модели и индекса ArcFace
+      responses:
+        "200":
+          description: Готовность модели и векторного индекса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArcFaceStatus"
+  /refresh-index:
+    post:
+      operationId: refreshEmployeeIndex
+      tags: [verification]
+      summary: Перезагрузить векторный индекс сотрудников
+      responses:
+        "200":
+          description: Статистика обновлённого индекса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArcFaceIndexRefresh"
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /employees/{employee_guid}/arcface-index:
+    post:
+      operationId: addEmployeeToArcFaceIndex
+      tags: [employees, verification]
+      summary: Добавить эталонное фото сотрудника в индекс ArcFace
+      parameters:
+        - name: employee_guid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Эмбеддинг добавлен, обновлён или уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArcFaceEmployeeEnrollment"
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Эталонное фото превышает допустимый размер }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "503": { description: "Фото, модель или индекс временно недоступны" }
+  /recognize:
+    post:
+      operationId: recognizeEmployee
+      tags: [verification]
+      summary: Найти кандидатов по одному фото ArcFace
+      parameters:
+        - name: top_k
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10, default: 5 }
+        - name: threshold
+          in: query
+          schema: { type: number, minimum: 0, maximum: 1, default: 0.7 }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ArcFaceRecognitionInput"
+      responses:
+        "200":
+          description: Топ совпавших UUID сотрудников и оценки сходства
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArcFaceRecognition"
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "413":
+          description: Изображение превышает допустимый размер
+        "415":
+          description: Загружен файл, не являющийся изображением
+        "503":
+          description: Модель или векторный индекс недоступны
+components:
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    ResultId:
+      name: result_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    NotFound:
+      description: Объект не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Ошибка валидации
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id: { type: string }
+        email: { type: [string, "null"], format: email }
+        firstName: { type: [string, "null"] }
+        lastName: { type: [string, "null"] }
+        profileImageUrl: { type: [string, "null"], format: uri }
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
+    PasswordLoginInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, minLength: 1, maxLength: 1024 }
+    PasswordLoginToken:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, const: bearer }
+        expires_in: { type: integer, minimum: 1 }
+    Employee:
+      type: object
+      required: [guid, personnel_number, surname, given_name, patronymic, organization, is_test, has_photo, photo_url]
+      properties:
+        guid: { type: string, format: uuid }
+        personnel_number: { type: string }
+        surname: { type: string }
+        given_name: { type: string }
+        patronymic: { type: string }
+        organization: { type: string }
+        is_test: { type: boolean }
+        has_photo: { type: boolean }
+        photo_url: { type: [string, "null"], format: uri-reference }
+    EmployeePhotoUploadUrlInput:
+      type: object
+      required: [size, content_type]
+      properties:
+        size: { type: integer, minimum: 1, maximum: 5242880 }
+        content_type: { type: string, const: image/jpeg }
+    EmployeePhotoUploadUrlResponse:
+      type: object
+      required: [upload_url, object_path]
+      properties:
+        upload_url: { type: string, format: uri }
+        object_path: { type: string }
+    EmployeePhotoFinalizeInput:
+      type: object
+      required: [object_path]
+      properties:
+        object_path: { type: string, minLength: 1, maxLength: 500 }
+    HealthStatus:
+      type: object
+      required: [status, service, version]
+      properties:
+        status: { type: string }
+        service: { type: string }
+        version: { type: string }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    DashboardSummary:
+      type: object
+      required: [total_events, health_id_today, verification_pass_rate, open_review_tasks, data_quality, model_version, categories]
+      properties:
+        total_events: { type: integer }
+        health_id_today: { type: integer }
+        verification_pass_rate: { type: number }
+        open_review_tasks: { type: integer }
+        data_quality: { type: number }
+        model_version: { type: string }
+        categories:
+          type: object
+          additionalProperties: { type: integer }
+    ActivityItem:
+      type: object
+      required: [id, type, title, description, created_at, status]
+      properties:
+        id: { type: string }
+        type: { type: string }
+        title: { type: string }
+        description: { type: string }
+        created_at: { type: string, format: date-time }
+        status: { type: string }
+    HealthCalculationInput:
+      type: object
+      required: [employee_ref, event_date, measurements]
+      properties:
+        employee_ref: { type: string, minLength: 1 }
+        event_date: { type: string, format: date-time }
+        measurements:
+          $ref: "#/components/schemas/HealthMeasurements"
+        context:
+          $ref: "#/components/schemas/HealthContext"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/HistoryItem"
+    HealthMeasurements:
+      type: object
+      required: [sleep_hours, stress_score, activity_minutes, resting_pulse, respiratory_rate, verification_quality]
+      properties:
+        sleep_hours: { type: number, minimum: 0, maximum: 24 }
+        stress_score: { type: number, minimum: 0, maximum: 10 }
+        activity_minutes: { type: number, minimum: 0 }
+        resting_pulse: { type: number, minimum: 20, maximum: 240 }
+        respiratory_rate: { type: number, minimum: 4, maximum: 60 }
+        verification_quality: { type: number, minimum: 0, maximum: 1 }
+    HealthContext:
+      type: object
+      properties:
+        age_group: { type: string }
+        has_chronic_conditions: { type: boolean }
+        work_shift: { type: string }
+    HistoryItem:
+      type: object
+      required: [event_date, health_id]
+      properties:
+        event_date: { type: string, format: date-time }
+        health_id: { type: number, minimum: 0, maximum: 1 }
+    EligibleHealthEmployee:
+      type: object
+      required: [employee_ref, full_name, organization, is_test, verification_session_id, verification_status, eligibility_source, verified_at]
+      properties:
+        employee_ref: { type: string }
+        full_name: { type: string }
+        organization: { type: string }
+        is_test: { type: boolean }
+        verification_session_id: { type: string, format: uuid }
+        verification_status:
+          type: string
+          enum: [verified, manual_review, not_verified, not_evaluable, insufficient_quality]
+        eligibility_source:
+          type: string
+          enum: [system, manual]
+        verified_at: { type: string, format: date-time }
+    PersonalBaseline:
+      type: object
+      required: [employee_ref, window_start, window_end, window_days, minimum_samples, metrics]
+      properties:
+        employee_ref: { type: string }
+        window_start: { type: string, format: date-time }
+        window_end: { type: string, format: date-time }
+        window_days: { type: integer }
+        minimum_samples: { type: integer }
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonalBaselineMetric"
+    PersonalBaselineMetric:
+      type: object
+      required: [key, label, unit, sample_count, ready, median, iqr, lower_bound, upper_bound]
+      properties:
+        key:
+          type: string
+          enum: [health_id, sleep_hours, stress_score, activity_minutes, resting_pulse, respiratory_rate]
+        label: { type: string }
+        unit: { type: string }
+        sample_count: { type: integer }
+        ready: { type: boolean }
+        median: { type: ["number", "null"] }
+        iqr: { type: ["number", "null"] }
+        lower_bound: { type: ["number", "null"] }
+        upper_bound: { type: ["number", "null"] }
+    HealthResult:
+      type: object
+      required: [id, employee_ref, event_date, health_id, category, status, model_version, components, evidence, disclaimer, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        employee_ref: { type: string }
+        event_date: { type: string, format: date-time }
+        health_id: { type: number }
+        category:
+          type: string
+          enum: [stable, attention, review]
+        status:
+          type: string
+          enum: [calculated, review_required, reviewed]
+        model_version: { type: string }
+        components:
+          type: object
+          additionalProperties: { type: number }
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthEvidence"
+        disclaimer: { type: string }
+        created_at: { type: string, format: date-time }
+    HealthResultListItem:
+      allOf:
+        - $ref: "#/components/schemas/HealthResult"
+        - type: object
+          required: [personal_baseline]
+          properties:
+            personal_baseline:
+              $ref: "#/components/schemas/PersonalBaselineEvaluation"
+    PersonalBaselineEvaluation:
+      type: object
+      required: [status, evaluated_metric_count, total_metric_count, outside_metrics]
+      properties:
+        status:
+          type: string
+          enum: [outside_corridor, within_corridor, insufficient_data]
+        evaluated_metric_count: { type: integer }
+        total_metric_count: { type: integer }
+        outside_metrics:
+          type: array
+          items:
+            type: string
+            enum: [health_id, sleep_hours, stress_score, activity_minutes, resting_pulse, respiratory_rate]
+    HealthEvidence:
+      type: object
+      required: [key, label, value, direction]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        value: { type: string }
+        direction:
+          type: string
+          enum: [positive, neutral, negative]
+    VerificationUploadInput:
+      type: object
+      required: [employee_ref, photo_file, video_file]
+      properties:
+        employee_ref: { type: string, minLength: 1 }
+        photo_file: { type: string, format: binary, description: Фото для верификации }
+        video_file: { type: string, format: binary, description: Видео для проверки liveness }
+        event_id: { type: string, maxLength: 120 }
+        video_source:
+          type: string
+          enum: [camera, upload]
+        camera_model: { type: string, maxLength: 120 }
+        camera_width: { type: integer, minimum: 1, maximum: 8192 }
+        camera_height: { type: integer, minimum: 1, maximum: 8192 }
+        camera_fps: { type: number, minimum: 0, maximum: 240 }
+        camera_facing_mode:
+          type: string
+          enum: [user, environment]
+        enroll_video_embeddings:
+          type: boolean
+          default: false
+          description: Добавить эмбеддинги видео в индекс только после успешной верификации
+    CameraVideoConversionInput:
+      type: object
+      required: [video_file]
+      properties:
+        video_file: { type: string, format: binary, description: Запись с камеры в формате WebM или MP4 }
+    VideoReceiptComplete:
+      type: object
+      required: [session_id, video_received, completed_at]
+      properties:
+        session_id: { type: string, format: uuid }
+        video_received: { type: boolean }
+        completed_at: { type: string, format: date-time }
+    VerificationSession:
+      type: object
+      required: [id, employee_ref, status, match_score, liveness_score, quality_score, decision, algorithm_version, created_at, audit_ref, is_match, ground_truth_match, is_live, ground_truth_liveness, cosine_distance]
+      properties:
+        id: { type: string, format: uuid }
+        employee_ref: { type: string }
+        status:
+          type: string
+          enum: [verified, manual_review, not_verified, not_evaluable, insufficient_quality]
+        match_score: { type: ["number", "null"] }
+        liveness_score: { type: ["number", "null"] }
+        quality_score: { type: ["number", "null"] }
+        decision:
+          type: string
+          enum: [match, no_match, review]
+        algorithm_version: { type: string }
+        created_at: { type: string, format: date-time }
+        audit_ref: { type: string }
+        attack_type: { type: ["string", "null"] }
+        is_match: { type: ["boolean", "null"] }
+        ground_truth_match: { type: ["boolean", "null"] }
+        is_live: { type: ["boolean", "null"] }
+        ground_truth_liveness: { type: ["boolean", "null"] }
+        cosine_distance: { type: ["number", "null"] }
+        embedding_comparison:
+          anyOf:
+            - $ref: "#/components/schemas/EmbeddingComparison"
+            - type: "null"
+        embedding_interpretation:
+          anyOf:
+            - $ref: "#/components/schemas/EmbeddingInterpretation"
+            - type: "null"
+        arcface_video_enrollment:
+          type: ["object", "null"]
+          additionalProperties: true
+        verification_elapsed_seconds: { type: ["number", "null"] }
+    EmbeddingComparison:
+      type: object
+      required: [status, method, reference_vectors, video_vectors, dimensions, mean, variance, outliers, distribution, message]
+      properties:
+        status:
+          type: string
+          enum: [available, insufficient_reference, no_reference, unavailable, no_video_vectors]
+        method: { type: string }
+        reference_vectors: { type: integer }
+        video_vectors: { type: integer }
+        dimensions: { type: integer }
+        mean:
+          type: object
+          required: [reference, video, delta, centroid_cosine_similarity]
+          properties:
+            reference: { type: ["number", "null"] }
+            video: { type: ["number", "null"] }
+            delta: { type: ["number", "null"] }
+            centroid_cosine_similarity: { type: ["number", "null"] }
+        variance:
+          type: object
+          required: [reference, video, ratio]
+          properties:
+            reference: { type: ["number", "null"] }
+            video: { type: ["number", "null"] }
+            ratio: { type: ["number", "null"] }
+        outliers:
+          type: object
+          required: [count, total, threshold]
+          properties:
+            count: { type: ["integer", "null"] }
+            total: { type: integer }
+            threshold: { type: ["number", "null"] }
+        distribution:
+          type: object
+          required: [bin_centers, reference_counts, video_counts]
+          properties:
+            bin_centers:
+              type: array
+              items: { type: number }
+            reference_counts:
+              type: array
+              items: { type: integer }
+            video_counts:
+              type: array
+              items: { type: integer }
+        message: { type: string }
+    EmbeddingInterpretationRequest:
+      type: object
+      required: [refresh]
+      properties:
+        refresh: { type: boolean, default: false }
+    EmbeddingInterpretation:
+      type: object
+      required: [analysis_version, verdict, summary, findings, recommendations, generated_at, model, disclaimer]
+      properties:
+        analysis_version: { type: integer }
+        verdict:
+          type: string
+          enum: [consistent, borderline, discordant, insufficient_data]
+        summary: { type: string }
+        findings:
+          type: array
+          items: { type: string }
+        recommendations:
+          type: array
+          items: { type: string }
+        generated_at: { type: string, format: date-time }
+        model: { type: string }
+        disclaimer: { type: string }
+    VerificationSessionDetail:
+      allOf:
+        - $ref: "#/components/schemas/VerificationSession"
+        - type: object
+          required:
+            [verification_id, event_id, worker_pseudonym, model_version, config_hash, face_match, liveness, quality, route, health_id, review_tasks, disclaimer]
+          properties:
+            verification_id: { type: string, format: uuid }
+            event_id: { type: string }
+            worker_pseudonym: { type: string }
+            model_version: { type: string }
+            config_hash: { type: string }
+            face_match:
+              type: object
+              additionalProperties: true
+            liveness:
+              type: object
+              additionalProperties: true
+            quality:
+              type: object
+              additionalProperties: true
+            route: { type: string }
+            health_id:
+              type: object
+              additionalProperties: true
+            review_tasks:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            disclaimer: { type: string }
+            not_evaluable_reason: { type: ["string", "null"] }
+            recommended_action: { type: ["string", "null"] }
+    VerificationReviewQueueItem:
+      type: object
+      required: [verification_session]
+      properties:
+        verification_session:
+          $ref: "#/components/schemas/VerificationReviewSession"
+    VerificationReviewSession:
+      type: object
+      required: [id, employee_ref, status, match_score, liveness_score, quality_score, decision]
+      properties:
+        id: { type: string, format: uuid }
+        employee_ref: { type: string }
+        status:
+          type: string
+          enum: [verified, manual_review, not_verified, not_evaluable, insufficient_quality]
+        match_score: { type: ["number", "null"] }
+        liveness_score: { type: ["number", "null"] }
+        quality_score: { type: ["number", "null"] }
+        decision:
+          type: string
+          enum: [match, no_match, review]
+    VerificationSessionStatus:
+      type: object
+      required: [session_id, status, decision, is_match, is_live, ground_truth_match, ground_truth_liveness, review_status, review_resolution, reviewer_note]
+      properties:
+        session_id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [verified, manual_review, not_verified, not_evaluable, insufficient_quality]
+        decision:
+          type: string
+          enum: [match, no_match, review]
+        is_match: { type: ["boolean", "null"] }
+        is_live: { type: ["boolean", "null"] }
+        ground_truth_match: { type: ["boolean", "null"] }
+        ground_truth_liveness: { type: ["boolean", "null"] }
+        review_status:
+          type: ["string", "null"]
+          enum: [open, in_review, resolved, null]
+        review_resolution:
+          type: ["string", "null"]
+          enum: [approve, reject, request_retry, null]
+        reviewer_note: { type: ["string", "null"] }
+    BiometricMetrics:
+      type: object
+      required: [id, calculation_date, window_start, window_end, far, frr, cer, apcer, bpcer, acer, total_samples, successful_matches, failed_matches, spoof_attempts_detected, live_rejected_as_spoof, created_at]
+      properties:
+        id: { type: integer }
+        calculation_date: { type: string, format: date }
+        window_start: { type: string, format: date-time }
+        window_end: { type: string, format: date-time }
+        far: { type: number }
+        frr: { type: number }
+        cer: { type: number }
+        apcer: { type: number }
+        bpcer: { type: number }
+        acer: { type: number }
+        total_samples: { type: integer }
+        successful_matches: { type: integer }
+        failed_matches: { type: integer }
+        spoof_attempts_detected: { type: integer }
+        live_rejected_as_spoof: { type: integer }
+        calculation_details:
+          type: object
+          nullable: true
+          required: [biometric, liveness]
+          properties:
+            biometric:
+              type: object
+              required: [tp, fp, fn, tn, genuine_cases, impostor_cases, labeled_cases]
+              properties:
+                tp: { type: integer, description: "True Positive: модель и оператор подтвердили совпадение." }
+                fp: { type: integer, description: "False Positive: модель приняла другого человека." }
+                fn: { type: integer, description: "False Negative: модель отклонила того же человека." }
+                tn: { type: integer, description: "True Negative: модель отклонила другого человека." }
+                genuine_cases: { type: integer }
+                impostor_cases: { type: integer }
+                labeled_cases: { type: integer }
+            liveness:
+              type: object
+              required: [spoof_cases, spoof_accepted_as_live, spoof_rejected, bona_fide_cases, bona_fide_rejected_as_spoof, bona_fide_accepted, labeled_cases]
+              properties:
+                spoof_cases: { type: integer }
+                spoof_accepted_as_live: { type: integer }
+                spoof_rejected: { type: integer }
+                bona_fide_cases: { type: integer }
+                bona_fide_rejected_as_spoof: { type: integer }
+                bona_fide_accepted: { type: integer }
+                labeled_cases: { type: integer }
+        created_at: { type: string, format: date-time }
+    DataDriftMetric:
+      type: object
+      required: [key, label, unit, baseline_samples, current_samples, psi, status, baseline_available]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        unit: { type: string }
+        baseline_samples: { type: integer }
+        current_samples: { type: integer }
+        psi: { type: ["number", "null"] }
+        status:
+          type: string
+          enum: [collecting, insufficient_data, stable, warning, critical]
+        baseline_available: { type: boolean }
+    DataDriftSummary:
+      type: object
+      required: [status, baseline_status, manual_review_mode, needs_recalibration, baseline_camera_models, current_camera_models, observations_total, baseline_days_elapsed, baseline_days_required, minimum_samples, target_far, current_match_threshold, recalibration_status, labelled_genuine_samples, labelled_impostor_samples, alert_messages, metrics]
+      properties:
+        status:
+          type: string
+          enum: [collecting, insufficient_data, stable, warning, critical]
+        baseline_status:
+          type: string
+          enum: [collecting, ready]
+        manual_review_mode: { type: boolean }
+        manual_review_reason: { type: ["string", "null"] }
+        needs_recalibration: { type: boolean }
+        collection_started_at: { type: ["string", "null"], format: date-time }
+        baseline_window_start: { type: ["string", "null"], format: date-time }
+        baseline_window_end: { type: ["string", "null"], format: date-time }
+        baseline_created_at: { type: ["string", "null"], format: date-time }
+        baseline_camera_models:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataDriftCameraSummary"
+        current_camera_models:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataDriftCameraSummary"
+        baseline_mean_brightness: { type: ["number", "null"] }
+        current_mean_brightness: { type: ["number", "null"] }
+        observations_total: { type: integer }
+        baseline_days_elapsed: { type: integer }
+        baseline_days_required: { type: integer }
+        analysis_window_start: { type: ["string", "null"], format: date-time }
+        analysis_window_end: { type: ["string", "null"], format: date-time }
+        minimum_samples: { type: integer }
+        target_far: { type: number }
+        current_match_threshold: { type: number }
+        recalibration_status: { type: string }
+        proposed_match_threshold: { type: ["number", "null"] }
+        achieved_far: { type: ["number", "null"] }
+        achieved_frr: { type: ["number", "null"] }
+        labelled_genuine_samples: { type: integer }
+        labelled_impostor_samples: { type: integer }
+        last_run_at: { type: ["string", "null"], format: date-time }
+        alert_messages:
+          type: array
+          items: { type: string }
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataDriftMetric"
+    DataDriftCameraSummary:
+      type: object
+      required: [camera_model, samples]
+      properties:
+        camera_model: { type: string }
+        samples: { type: integer }
+    DataDriftRun:
+      type: object
+      required: [id, calculation_date, window_start, window_end, status, psi_values, sample_counts, needs_recalibration, manual_review_mode, alert_messages, recalibration, created_at]
+      properties:
+        id: { type: integer }
+        calculation_date: { type: string, format: date }
+        window_start: { type: string, format: date-time }
+        window_end: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [collecting, insufficient_data, stable, warning, critical]
+        psi_values:
+          type: object
+          additionalProperties: { type: ["number", "null"] }
+        sample_counts:
+          type: object
+          additionalProperties: { type: integer }
+        needs_recalibration: { type: boolean }
+        manual_review_mode: { type: boolean }
+        alert_messages:
+          type: array
+          items: { type: string }
+        recalibration:
+          type: object
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+    DataDriftControlInput:
+      type: object
+      required: [enabled, reviewer_note]
+      properties:
+        enabled: { type: boolean }
+        reviewer_note: { type: string, minLength: 1, maxLength: 500 }
+    ReviewTask:
+      type: object
+      required: [id, kind, subject_ref, status, priority, summary, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind:
+          type: string
+          enum: [verification, health_id]
+        subject_ref: { type: string }
+        status:
+          type: string
+          enum: [open, in_review, resolved]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        summary: { type: string }
+        created_at: { type: string, format: date-time }
+        resolved_at: { type: ["string", "null"], format: date-time }
+        resolution: { type: ["string", "null"] }
+        reviewer_note: { type: ["string", "null"] }
+        verification_session_id: { type: ["string", "null"], format: uuid }
+    ReviewInput:
+      type: object
+      required: [resolution]
+      properties:
+        resolution:
+          type: string
+          enum: [approve, reject, request_retry]
+        reviewer_note: { type: string }
+        ground_truth_match: { type: ["boolean", "null"] }
+        ground_truth_liveness: { type: ["boolean", "null"] }
+    VerificationReviewDecisionInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approve, reject, request_retry]
+          description: |
+            approve = подтвердить; reject = отклонить; request_retry = запросить повторную проверку.
+        ground_truth_match: { type: ["boolean", "null"] }
+        ground_truth_liveness: { type: ["boolean", "null"] }
+        comment: { type: string }
+    ModelCard:
+      type: object
+      required: [model_id, model_name, version, status, purpose, change_summary, disclaimer, thresholds, components, limitations, parameters, parameter_fields]
+      properties:
+        model_id: { type: string, format: uuid }
+        model_name: { type: string }
+        version: { type: string }
+        status: { type: string }
+        purpose: { type: string }
+        change_summary: { type: string }
+        disclaimer: { type: string }
+        thresholds:
+          type: object
+          additionalProperties: { type: number }
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelComponent"
+        limitations:
+          type: array
+          items: { type: string }
+        parameters:
+          type: object
+          additionalProperties: true
+        parameter_fields:
+          type: array
+          items: { $ref: "#/components/schemas/ModelParameter" }
+    ModelParameter:
+      type: object
+      required: [key, label, group, value_type, default]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        group: { type: string }
+        value_type: { type: string, enum: [boolean, number, array, select, text] }
+        default: {}
+        options:
+          type: array
+          items:
+            type: object
+            required: [value, label]
+            properties:
+              value: { type: string }
+              label: { type: string }
+    ModelDefaults:
+      type: object
+      required: [model_name, purpose, change_summary, parameters, parameter_fields]
+      properties:
+        model_name: { type: string }
+        purpose: { type: string }
+        change_summary: { type: string }
+        parameters:
+          type: object
+          additionalProperties: true
+        parameter_fields:
+          type: array
+          items: { $ref: "#/components/schemas/ModelParameter" }
+    ModelRegistryInput:
+      type: object
+      required: [model_name, version, purpose, change_summary, parameters]
+      properties:
+        model_name: { type: string, minLength: 1, maxLength: 120 }
+        version: { type: string, minLength: 1, maxLength: 60 }
+        purpose: { type: string, minLength: 1, maxLength: 2000 }
+        change_summary: { type: string, minLength: 1, maxLength: 2000 }
+        parameters:
+          type: object
+          additionalProperties: true
+    ModelRegistry:
+      allOf:
+        - $ref: "#/components/schemas/ModelRegistryInput"
+        - type: object
+          required: [id, status, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string, enum: [current, draft, archived] }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    ModelComponent:
+      type: object
+      required: [key, label, weight]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        weight: { type: number }
+        source: { type: string }
+    ModelVersion:
+      type: object
+      required: [version, released_at, status, change_summary]
+      properties:
+        id: { type: ["string", "null"], format: uuid }
+        model_name: { type: ["string", "null"] }
+        version: { type: string }
+        released_at: { type: string, format: date-time }
+        status: { type: string }
+        change_summary: { type: string }
+    ArcFaceCandidate:
+      type: object
+      required: [uuid, cosine_similarity]
+      properties:
+        uuid: { type: string, format: uuid }
+        cosine_similarity: { type: number, minimum: -1, maximum: 1 }
+        employee_ref: { type: ["string", "null"] }
+        full_name: { type: ["string", "null"] }
+    ArcFaceRecognitionInput:
+      type: object
+      required: [file]
+      properties:
+        file: { type: string, format: binary }
+    ArcFaceRecognition:
+      type: object
+      required: [found, threshold, top_match, results, disclaimer]
+      properties:
+        found: { type: boolean }
+        threshold: { type: number, minimum: 0, maximum: 1 }
+        top_match:
+          oneOf:
+            - $ref: "#/components/schemas/ArcFaceCandidate"
+            - type: "null"
+        results:
+          type: array
+          items: { $ref: "#/components/schemas/ArcFaceCandidate" }
+        disclaimer: { type: string }
+    ArcFaceIndexRefresh:
+      type: object
+      required: [status, vectors_count, employees_count, dim, elapsed_seconds, message]
+      properties:
+        status: { type: string, enum: [success] }
+        vectors_count: { type: integer, minimum: 0 }
+        employees_count: { type: integer, minimum: 0 }
+        dim: { type: integer, minimum: 1 }
+        elapsed_seconds: { type: number, minimum: 0 }
+        message: { type: string }
+    ArcFaceEmployeeEnrollment:
+      type: object
+      required: [added, updated, already_indexed, vectors_count, employees_count, employee_guid, personnel_number, message]
+      properties:
+        added: { type: boolean }
+        updated: { type: boolean }
+        already_indexed: { type: boolean }
+        vectors_count: { type: integer, minimum: 0 }
+        employees_count: { type: integer, minimum: 0 }
+        employee_guid: { type: string, format: uuid }
+        personnel_number: { type: string }
+        message: { type: string }
+    ArcFaceStatus:
+      type: object
+      required: [index_ready, model_ready, vectors_count, dim, employees_count, class_mapping_ready]
+      properties:
+        index_ready: { type: boolean }
+        model_ready: { type: boolean }
+        vectors_count: { type: integer, minimum: 0 }
+        video_vectors_count: { type: integer, minimum: 0 }
+        dim: { type: ["integer", "null"] }
+        employees_count: { type: integer, minimum: 0 }
+        class_mapping_ready: { type: boolean }
+        index_error: { type: ["string", "null"] }
+        model_error: { type: ["string", "null"] }
