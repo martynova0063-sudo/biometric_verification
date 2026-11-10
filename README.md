@@ -2,6 +2,8 @@
 
 ### Компьютерное зрение (CV) и предобработка
 ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-blue.svg)
+![Haar%20Cascades](https://img.shields.io/badge/Haar%20Cascades-classic-orange.svg)
+![HOG%2B%20LBP](https://img.shields.io/badge/HOG%2BLBP-handcrafted-green.svg)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10.x-orange.svg)
 ![Albumentations](https://img.shields.io/badge/Albumentations-1.3.x-green.svg)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-6.x-darkblue.svg)
@@ -9,6 +11,7 @@
 ![Dlib](https://img.shields.io/badge/Dlib-19.x-pink.svg)
 
 ### Извлечение эмбеддингов и биометрические модели
+![ResNet50%2BArcFace](https://img.shields.io/badge/ResNet50%2BArcFace-custom-teal.svg)
 ![InsightFace](https://img.shields.io/badge/InsightFace-0.7.x-teal.svg)
 ![ONNX%20Runtime](https://img.shields.io/badge/ONNX%20Runtime-1.16.x-cyan.svg)
 ![TensorRT](https://img.shields.io/badge/TensorRT-8.x-indigo.svg)
